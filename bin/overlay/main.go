@@ -28,6 +28,7 @@ type OverlayRectText struct {
 	Y      float64 `json:"y"`
 	Width  float64 `json:"width"`  // rectangle width in PDF points
 	Height float64 `json:"height"` // rectangle height in PDF points
+	Scale  float64 `json:"scale"`
 }
 
 // createWhitePNG returns a data URI for a w x h PNG of solid white.
@@ -112,8 +113,8 @@ func main() {
 	currentPDF := originalPDF
 
 	for i, ov := range overlays {
-		log.Printf("Processing overlay %d: text=%q at (%.2f, %.2f), rect=%.2fx%.2f\n",
-			i, ov.Text, ov.X, ov.Y, ov.Width, ov.Height)
+		log.Printf("Processing overlay %d: text=%q at (%.2f, %.2f), rect=%.2fx%.2f, scale=%.2f\n",
+			i, ov.Text, ov.X, ov.Y, ov.Width, ov.Height, ov.Scale)
 
 		// -----------------------------------------------------
 		// Pass 1: White rectangle (if width/height > 0)
@@ -136,7 +137,7 @@ func main() {
 			// offset:X Y => shift by (ov.X, ov.Y)
 			// scale:1 abs => keep actual pixel size => ov.Width x ov.Height in PDF points
 			// mode:0 => overlay in the foreground (opaque)
-			rectParams := fmt.Sprintf("pos:bl, offset:%f %f, scale:1 abs, rot:0, mode:0", ov.X, ov.Y)
+			rectParams := fmt.Sprintf("pos:bl, offset:%f %f, scale:%f abs, rot:0, mode:0", ov.X, ov.Y, ov.Scale)
 			wmRect, err := pdfcpu.ParseImageWatermarkDetails(whitePNGPath, rectParams, true, types.POINTS)
 			if err != nil {
 				log.Fatalf("Failed to parse image watermark details for overlay %d: %v\n", i, err)
@@ -160,8 +161,8 @@ func main() {
 		// -----------------------------------------------------
 		// Pass 2: Text
 		// -----------------------------------------------------
-		textParams := fmt.Sprintf("pos:bl, offset:%f %f, rot:0, scale:1, fillc:#000000, mode:0",
-			ov.X, ov.Y)
+		textParams := fmt.Sprintf("pos:bl, offset:%f %f, rot:0, scale:%f, fillc:#000000, mode:0",
+			ov.X, ov.Y, ov.Scale/4)
 		wmText, err := pdfcpu.ParseTextWatermarkDetails(ov.Text, textParams, true, types.POINTS)
 		if err != nil {
 			log.Fatalf("Error creating text watermark for overlay %d: %v\n", i, err)
